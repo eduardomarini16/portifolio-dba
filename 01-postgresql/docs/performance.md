@@ -69,6 +69,6 @@ Quando a consulta retornou poucos registros, como no caso do `id_cliente = 7`, o
 
 Quando a consulta retornou praticamente toda a tabela, como no caso do `id_cliente = 1`, o PostgreSQL optou por `Seq Scan`.
 
-A decisão é realizada pelo otimizador do PostgreSQL com base no custo estimado de cada estratégia. Dessa forma, o uso de índices deve considerar a seletividade das consultas e o volume de dados da tabela.N
+A decisão é realizada pelo otimizador do PostgreSQL com base no custo estimado de cada estratégia. Dessa forma, o uso de índices deve considerar a seletividade das consultas e o volume de dados da tabela.
 
 Não estamos comparando diretamente esses tempos como se fossem uma medição equivalente, porque uma consulta retornou 10 linhas e a outra retornou 100.002, a explicação do plano de execução é o ponto principal de observação.
