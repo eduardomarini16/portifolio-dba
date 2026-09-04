@@ -1,0 +1,19 @@
+-- Criação da tabela de clientes
+
+CREATE TABLE IF NOT EXISTS clientes (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    telefone VARCHAR(30) NOT NULL,
+    data_cadastro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Criação da tabela de pedidos
+
+CREATE TABLE IF NOT EXISTS pedidos (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_cliente INTEGER NOT NULL,
+    data_pedido TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    valor_total NUMERIC(10,2) NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id)
+);
