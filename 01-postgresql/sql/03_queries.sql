@@ -20,12 +20,11 @@ INNER JOIN
 SELECT
     c.id,
     c.nome,
-    p.data_pedido,
     SUM(p.valor_total) AS total_compras
 FROM clientes c
 INNER JOIN pedidos p
-    ON c.id = p.id_cliente
-GROUP BY c.id, c.nome, p.data_pedido;
+    ON p.id_cliente = c.id
+GROUP BY c.id, c.nome;
 
 -- 5. Listar todos os clientes e seus pedidos
 -- Iclui clientes que ainda não possuem pedidos

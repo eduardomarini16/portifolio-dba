@@ -105,9 +105,58 @@ docker compose ps
 docker compose logs -f postgres
 ```
 
-> Caso o serviço tenha outro nome no `docker-compose.yml`, substitua `postgres` pelo nome correspondente.
+Espere aparecer a mensagem `database system is ready to accept connections`. Pressione `Ctrl+C` para sair dos logs; o contêiner continuará em execução.
 
-### 6. Encerrar o ambiente
+### 6. Copiar os scripts e acessar o contêiner
+
+O Compose inicia o PostgreSQL, mas não executa os arquivos SQL automaticamente. Execute os comandos abaixo na pasta `01-postgresql`. Eles funcionam tanto no PowerShell quanto no terminal Linux/macOS, sem precisar instalar o `psql` no computador:
+
+```bash
+docker compose cp ./sql/. postgres:/tmp/portfolio-sql
+docker compose exec postgres bash
+```
+
+O segundo comando abre um terminal dentro do contêiner. Os próximos comandos devem ser executados nesse terminal, onde as variáveis `POSTGRES_USER` e `POSTGRES_DB` já estão disponíveis.
+
+### 7. Criar as tabelas, carregar os dados e executar os SQLs
+
+Este procedimento de carga inicial pressupõe um banco novo, sem as tabelas do projeto. Execute uma linha por vez, na ordem abaixo; se houver erro, corrija-o antes de continuar.
+
+```bash
+psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f /tmp/portfolio-sql/01_create_tables.sql
+psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction -f /tmp/portfolio-sql/02_insert_data.sql
+psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f /tmp/portfolio-sql/03_queries.sql
+psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f /tmp/portfolio-sql/04_indexes.sql
+```
+
+`ON_ERROR_STOP=1` interrompe cada arquivo no primeiro erro. A carga usa `--single-transaction` para evitar inserções parciais caso algum comando falhe.
+
+O arquivo `02_insert_data.sql` deve ser executado apenas uma vez na preparação do banco: repeti-lo causa conflito nos e-mails únicos. Reiniciar o contêiner não limpa os dados, pois eles ficam no volume persistente.
+
+### 8. Conferir a carga e consultar o banco
+
+Ainda no terminal do contêiner, abra o `psql`:
+
+```bash
+psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+```
+
+No prompt do `psql`, liste as tabelas, confira os índices de `pedidos` e valide os dados:
+
+```sql
+\dt
+\d pedidos
+SELECT COUNT(*) AS total_clientes FROM clientes;
+SELECT COUNT(*) AS total_pedidos, SUM(valor_total) AS valor_total FROM pedidos;
+```
+
+Após a carga inicial, o resultado esperado é **4 clientes**, **4 pedidos** e **780.00** no total dos pedidos. A descrição de `pedidos` deve incluir o índice `idx_pedidos_id_cliente`.
+
+Essa carga contém apenas os dados básicos; os registros adicionais descritos em `docs/performance.md` não são gerados por esses scripts.
+
+Digite `\q` para sair do `psql` e, em seguida, `exit` para voltar ao terminal do computador. Se modificar os SQLs localmente, repita a cópia do passo 6 antes de executar o arquivo alterado.
+
+### 9. Encerrar o ambiente
 
 ```bash
 docker compose down
